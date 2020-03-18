@@ -1,1 +1,1 @@
-Aviasales - Insensive from GloAcademy
+Aviasales from GloAcademy
