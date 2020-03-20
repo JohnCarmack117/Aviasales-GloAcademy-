@@ -11,17 +11,8 @@ const citiesApi = 'dataBase/cities.json',
     proxy = 'https://cors-anywhere.herokuapp.com/',
     API_KEY = 'c23e45ad6c8f822da2516b2dccd57a7e',
     calendar = 'http://min-prices.aviasales.ru/calendar_preload';
-    //Екатеринбург - Калининград 25 мая
-
 
 let city = [];
-// let ticket = [{
-//     "origin": "EKB",
-//     "destination": "KGD",
-//     "depart_date": "2020-25-05",
-//     "one_way": true,
-// }];
-// let ticket = [`origin=SVX&destination=KGD&depart_date=2020-05-25&one_way=true`];
 
 // Функции
 
@@ -37,9 +28,7 @@ const getData = (url, callback) => {
         if (request.status === 200) {
             callback(request.response);
         }
-        else if (request.status === 400) {
-            callback(request.response); 
-        } else {
+        else {
             console.error(request.status);
         }
 
@@ -79,7 +68,33 @@ const selectCity = (event, input, list) => {
         input.value = target.textContent; 
         list.textContent = '';       
     }
-}
+};
+
+const renderCheapDay = (cheapTicket) => {
+    console.log('cheapTicketDay: ', cheapTicket);    
+};
+
+const renderCheapYear = (cheapTickets) => {
+    cheapTickets.sort((a, b) => {
+        return a.value - b.value;   
+    });
+    console.log('cheapTicketYear: ', cheapTickets);
+};
+
+const renderCheap = (data, date) => {
+    const cheapTicketYear = JSON.parse(data).best_prices;
+
+    // console.log('cheapTicketYear: ', cheapTicketYear);
+
+    const cheapTicketDay = cheapTicketYear.filter((item) => {
+        return item.depart_date === date;
+    })
+
+    // console.log('cheapTicketDay: ', cheapTicketDay);
+
+    renderCheapDay(cheapTicketDay);
+    renderCheapYear(cheapTicketYear);
+};
 
 
 // Обработчики событий
@@ -102,21 +117,58 @@ dropdownCitiesTo.addEventListener('click', (event) => {
     selectCity(event, inputCitiesTo, dropdownCitiesTo);
 });
 
+// Событие основной формы
+formSearch.addEventListener('submit', (event) => {
+    // Позволяет при нажатии на кнопку не перезагружать страницу
+    event.preventDefault();
+
+    // Находим город внутри массива city и возвращаем объект
+    const cityFrom = city.find((item) => {
+        return inputCitiesFrom.value === item.name;
+    });
+
+    // Находим город внутри массива city и возвращаем объект
+    const cityTo = city.find((item) => {
+        return inputCitiesTo.value === item.name;
+    });
+
+    // Вывод данных по городам Откуда - Куда - Когда
+    const formData = {
+        from: cityFrom.code,
+        to: cityTo.code,
+        when: inputDateDepart.value,
+    }; 
+
+    // console.log(formData);
+
+    // Формируем часть адресной строки как в документации API (вариант современный)
+    const requestData = `?depart_date=${formData.when}&origin=${formData.from}` + 
+        `&destination=${formData.to}&one_way=true&token=` + API_KEY;
+
+    // Формируем часть адресной строки как в документации API (вариант устаревший)
+    // const requestData2 = '?depart_date=' + formData.when +
+    //     '&origin=' + formData.from +
+    //     '&destination=' + formData.to +
+    //     '&one_way=true&token=' + API_KEY;
+    
+    // console.log(requestData);
+
+    // Запрос по адресу и добавляем requestData - возвращается ответ в response
+    getData(calendar + requestData, (response) => {
+        // console.log(response);
+        renderCheap(response, formData.when);
+    });
+
+});
+
 
 // Вызовы функций
 
 // Функция получить данные по городам
 getData(citiesApi, (data) => {
     city = JSON.parse(data).filter(item => item.name);
-    console.log(JSON.parse(data));
+    console.log(city);
 });
-
-// getData(calendar + ticket, (current_depart_date_prices) => {
-//     // ticket = JSON.stringify(current_depart_date_prices).includes((item) => {
-//     //     return item.origin;
-//     // });
-//     console.log(ticket);
-// })
 
 /*
 
